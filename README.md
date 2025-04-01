@@ -1,6 +1,6 @@
 # 053_004_055_021_Distributed_System_Cluster_Simulation
 
-* After cloning the repo, make sure to create a virtual environment [python -m venv venv] in the folder where this repo is cloned. *
+* After cloning the repo, make sure to create a virtual environment [`python -m venv venv`] in the folder where this repo is cloned. *
 
 ## **Week** 1️⃣
 
