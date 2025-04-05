@@ -1,24 +1,23 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 from datetime import datetime
 import time
 import threading
-import requests
 import atexit
+import os
 
 app = Flask(__name__)
 CORS(app)
 
 
-# GLOBAL DATA STORES
+# DATA STORES
 nodes = {}
 pods = {}
-heartbeat_threads = {}  # Stores heartbeat threads for each node
-# Best-fit algorithm is used in this project
+heartbeat_threads = {}
 
-# HELPER FUNCTIONS
+# ==========HELPER FUNCTIONS==========
 def validate_cpu_cores(cpu_cores):
-    """Validate CPU core input"""
+    """Validate CPU core input (must be positive integer)"""
     return isinstance(cpu_cores, int) and cpu_cores > 0
 
 def format_timestamp():
@@ -39,7 +38,7 @@ def send_heartbeats(node_id):
             print(f"Heartbeat error for {node_id}: {str(e)}")
             break
 
-# WEEK 1 IMPLEMENTATION
+# ==========Week 1==========
 @app.route('/nodes', methods=['GET'])
 def list_nodes():
     """List all nodes in the cluster"""
@@ -88,7 +87,7 @@ def add_node():
         "timestamp": current_time
     }), 201
 
-# WEEK 2 IMPLEMENTATION
+# ==========Week 2==========
 def schedule_pod(cpu_required):
     """Schedule pod using Best-Fit algorithm"""
     best_node = None
@@ -102,6 +101,15 @@ def schedule_pod(cpu_required):
                 best_node = node_id
     
     return best_node
+
+@app.route('/pods', methods=['GET'])
+def list_pods():
+    """List all pods in the cluster"""
+    return jsonify({
+        "pods": pods,
+        "total_pods": len(pods),
+        "last_updated": format_timestamp()
+    })
 
 @app.route('/pods', methods=['POST'])
 def launch_pod():
@@ -164,7 +172,39 @@ def check_health():
             except:
                 continue
 
-# ERROR HANDLERS
+@app.route('/')
+def web_interface():
+    """Serve the web interface dashboard"""
+    return """
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Cluster Management Dashboard</title>
+        <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    </head>
+    <body class="bg-gray-50">
+        <div id="app" class="container mx-auto px-4 py-8"></div>
+        
+        <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+        <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+        <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+        <script type="text/babel" src="/static/app.js"></script>
+    </body>
+    </html>
+    """
+
+@app.route('/static/<path:filename>')
+def serve_static(filename):
+    """Serve static files for the web interface"""
+    # Create static directory if it doesn't exist
+    if not os.path.exists('static'):
+        os.makedirs('static')
+    return send_from_directory('static', filename)
+
+# ==========ERROR HANDLING==========
 @app.errorhandler(404)
 def not_found(error):
     return jsonify({
@@ -192,6 +232,10 @@ if __name__ == '__main__':
     health_thread = threading.Thread(target=check_health)
     health_thread.daemon = True
     health_thread.start()
+    
+    # Create static directory if it doesn't exist
+    if not os.path.exists('static'):
+        os.makedirs('static')
     
     # Start Flask server
     app.run(host='0.0.0.0', port=5000, debug=True)
