@@ -24,7 +24,7 @@
 
 POSTMAN 📫
 
-***GET*** & ***POST*** to [localhost:5000/nodes] (for node creation)  
-***GET*** & ***POST*** to [localhost:5000/pods] (for pod scheduling)
+***GET*** & ***POST*** to <u>localhost:5000/nodes</u> (for node creation)  
+***GET*** & ***POST*** to <u>localhost:5000/pods</u> (for pod scheduling)
 
 ============================================================================
